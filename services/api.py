@@ -6,14 +6,13 @@ import requests
 
 from dto import AirQuality
 from utils.api import request_data
+from airflow.models import Variable
+
+API_KEY = Variable.get("open_api_key")
+API_ROOT = f"http://openAPI.seoul.go.kr:8088/{API_KEY}/json/TimeAverageAirQuality/"
 
 
-class ParserService:
-    API_ROOT = "http://openAPI.seoul.go.kr:8088"
-
-    def __init__(self, api_key):
-        self.api_key = api_key
-
+class APIService:
     @lru_cache(maxsize=None)
     def result_count(self, target_date_str: str):
         base_url = self.get_api_url(target_date_str, 1, 1)
@@ -25,7 +24,7 @@ class ParserService:
         return total_count
 
     def get_api_url(self, target_date_str: str, start_idx: int, end_idx: int) -> str:
-        url = f"{self.API_ROOT}/{self.api_key}/json/TimeAverageAirQuality/{start_idx}/{end_idx}/{target_date_str}"
+        url = f"{API_ROOT}/{start_idx}/{end_idx}/{target_date_str}"
         return url
 
     def get_fullday_api_url(self, target_date_str: str) -> str:
@@ -44,3 +43,6 @@ class ParserService:
     ) -> typing.List[AirQuality]:
         url = self.get_fullday_api_url(target_date_str)
         return request_data(url)
+
+
+api_service = APIService()
