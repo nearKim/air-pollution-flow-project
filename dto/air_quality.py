@@ -4,7 +4,7 @@ from dataclasses import Field
 from pydantic import BaseModel, validator
 
 
-class AirQuality(BaseModel):
+class AirQualityDTO(BaseModel):
     measure_datetime: datetime.datetime = Field(..., alias="MSRDT")
     location: str = Field(..., alias="MSRSTE_NM")
     no2: float

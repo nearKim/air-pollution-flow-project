@@ -1,1 +1,1 @@
-from .air_quality import AirQuality
+from .air_quality import AirQualityDTO
