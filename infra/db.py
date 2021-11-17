@@ -8,8 +8,8 @@ def get_db():
     username = secret_data["username"]
     password = secret_data["password"]
     host = secret_data["host"]
-    engine_uri = f"mysql://{username}:{password}@{host}/air_pollution"
-    return create_engine(engine_uri)
+    engine_uri = f"mysql+pymysql://{username}:{password}@{host}/air_pollution"
+    return create_engine(engine_uri, echo_pool=True, echo=True)
 
 
 engine = get_db()
