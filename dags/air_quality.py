@@ -90,6 +90,7 @@ with DAG(
     schedule_interval="@daily",
     start_date=datetime(2021, 11, 1),
     catchup=True,
+    tags=['air_quality', 'DB']
 ) as dag:
     # TODO: Check if the DAG is gathering the air quality of the yesterday
     t1 = PythonOperator(
