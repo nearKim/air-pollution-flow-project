@@ -9,7 +9,10 @@ def get_db():
     password = secret_data["password"]
     host = secret_data["host"]
     engine_uri = f"mysql+pymysql://{username}:{password}@{host}/air_pollution"
-    return create_engine(engine_uri, echo_pool=True, echo=True)
+
+    return create_engine(
+        engine_uri, echo_pool=True, echo=True, isolation_level="AUTOCOMMIT"
+    )
 
 
 engine = get_db()
