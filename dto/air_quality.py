@@ -1,7 +1,5 @@
 import datetime
-from dataclasses import Field
-
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, Field
 
 
 class AirQualityDTO(BaseModel):

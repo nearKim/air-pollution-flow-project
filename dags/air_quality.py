@@ -12,9 +12,13 @@ from sqlalchemy import (
     String,
     BigInteger,
     MetaData,
-    func,
+    UniqueConstraint,
+    FetchedValue,
 )
+from sqlalchemy.dialects.mysql import insert
 
+from dto import AirQualityDTO
+from infra.db import engine
 from services.api import api_service
 
 metadata = MetaData()
@@ -31,8 +35,9 @@ air_quality = Table(
     Column("so2", Float),
     Column("pm10", Float),
     Column("pm25", Float),
-    Column("upd_ts", TIMESTAMP, server_default=func.now, server_onupdate=func.now),
-    Column("reg_ts", TIMESTAMP, server_default=func.now),
+    Column("upd_ts", TIMESTAMP, server_onupdate=FetchedValue()),
+    Column("reg_ts", TIMESTAMP, server_default=FetchedValue()),
+    UniqueConstraint("measure_datetime", "location"),
 )
 
 
@@ -41,8 +46,29 @@ def get_api_result_count(dt: datetime, **context) -> int:
     return cnt
 
 
-def insert_data_to_db(dt: datetime, **context) -> typing.NoReturn:
-    pass
+def insert_data_to_db(dt: datetime, cnt: int, **context) -> typing.NoReturn:
+    dto_list: typing.List[AirQualityDTO] = api_service.get_air_quality_list(dt, 1, cnt)
+    dict_list = api_service.convert_dto_list_to_dict_list(dto_list)
+
+    stmt_list = []
+    for d in dict_list:
+        stmt = insert(air_quality).values(**d)
+        stmt = stmt.on_duplicate_key_update(
+            id=stmt.inserted.id,
+            measure_datetime=stmt.inserted.measure_datetime,
+            location=stmt.inserted.location,
+            no2=stmt.inserted.no2,
+            o3=stmt.inserted.o3,
+            co=stmt.inserted.co,
+            so2=stmt.inserted.so2,
+            pm10=stmt.inserted.pm10,
+            pm25=stmt.inserted.pm25,
+        )
+        stmt_list.append(stmt)
+
+    with engine.connect() as conn:
+        for stmt in stmt_list:
+            conn.execute(stmt)
 
 
 default_args = {

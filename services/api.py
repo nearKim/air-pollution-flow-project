@@ -38,5 +38,11 @@ class APIService:
         url = self.get_api_url(target_datetime_str, start_idx, end_idx)
         return request_data(url)
 
+    def convert_dto_list_to_dict_list(
+            self, dto_list: typing.List[AirQualityDTO]
+    ) -> typing.List[typing.Dict]:
+        dict_list = [dto.dict() for dto in dto_list]
+        return dict_list
+
 
 api_service = APIService()
