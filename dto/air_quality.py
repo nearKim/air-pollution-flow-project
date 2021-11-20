@@ -1,18 +1,16 @@
 import datetime
-from dataclasses import Field
-
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, Field
 
 
-class AirQuality(BaseModel):
+class AirQualityDTO(BaseModel):
     measure_datetime: datetime.datetime = Field(..., alias="MSRDT")
     location: str = Field(..., alias="MSRSTE_NM")
     no2: float
     o3: float
     co: float
     so2: float
-    pm10: int
-    pm25: int
+    pm10: float
+    pm25: float
 
     @validator("measure_datetime")
     def string_to_datetime(cls, value: str) -> datetime.datetime:
