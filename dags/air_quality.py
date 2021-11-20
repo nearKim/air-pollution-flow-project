@@ -41,12 +41,14 @@ air_quality = Table(
 )
 
 
-def get_api_result_count(dt: datetime, **context) -> int:
+def get_api_result_count(datetime_str: str, **context) -> int:
+    dt = datetime.strptime(datetime_str, '%Y-%m-%d')
     cnt = api_service.get_result_count(dt)
     return cnt
 
 
-def insert_data_to_db(dt: datetime, **context) -> typing.NoReturn:
+def insert_data_to_db(datetime_str: str, **context) -> typing.NoReturn:
+    dt = datetime.strptime(datetime_str, '%Y-%m-%d')
     cnt = context['task_instance'].xcom_pull(task_ids='get_api_result_count')
     dto_list: typing.List[AirQualityDTO] = api_service.get_air_quality_list(dt, 1, cnt)
     dict_list = api_service.convert_dto_list_to_dict_list(dto_list)
@@ -88,7 +90,7 @@ with DAG(
     schedule_interval="@daily",
     start_date=datetime(2021, 11, 1),
     catchup=True,
-):
+) as dag:
     # TODO: Check if the DAG is gathering the air quality of the yesterday
     t1 = PythonOperator(
         task_id="get_api_result_count",
