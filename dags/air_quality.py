@@ -46,7 +46,8 @@ def get_api_result_count(dt: datetime, **context) -> int:
     return cnt
 
 
-def insert_data_to_db(dt: datetime, cnt: int, **context) -> typing.NoReturn:
+def insert_data_to_db(dt: datetime, **context) -> typing.NoReturn:
+    cnt = context['task_instance'].xcom_pull(task_ids='get_api_result_count')
     dto_list: typing.List[AirQualityDTO] = api_service.get_air_quality_list(dt, 1, cnt)
     dict_list = api_service.convert_dto_list_to_dict_list(dto_list)
 
@@ -95,12 +96,10 @@ with DAG(
         op_kwargs={"dt": "{{ ds }}"},
     )
 
-    result_count: int = t1.xcom_pull(task_ids="get_api_result_count")
-
     t2 = PythonOperator(
         task_id="insert_data_to_db",
         python_callable=insert_data_to_db,
-        op_kwargs={"dt": "{{ ds }}", "cnt": result_count},
+        op_kwargs={"dt": "{{ ds }}"},
     )
 
     t1 >> t2
