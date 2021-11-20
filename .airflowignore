@@ -1,0 +1,5 @@
+dto/.*
+infra/.*
+requirements/.*
+services/.*
+utils/.*
