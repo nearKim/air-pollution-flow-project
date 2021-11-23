@@ -20,6 +20,7 @@ from sqlalchemy.dialects.mysql import insert
 from dto import AirQualityDTO
 from infra.db import engine
 from services.api import api_service
+from utils.sentry import capture_exception_to_sentry
 
 metadata = MetaData()
 
@@ -41,15 +42,17 @@ air_quality = Table(
 )
 
 
+@capture_exception_to_sentry
 def get_api_result_count(datetime_str: str, **context) -> int:
-    dt = datetime.strptime(datetime_str, '%Y-%m-%d')
+    dt = datetime.strptime(datetime_str, "%Y-%m-%d")
     cnt = api_service.get_result_count(dt)
     return cnt
 
 
+@capture_exception_to_sentry
 def insert_data_to_db(datetime_str: str, **context) -> typing.NoReturn:
-    dt = datetime.strptime(datetime_str, '%Y-%m-%d')
-    cnt = context['task_instance'].xcom_pull(task_ids='get_api_result_count')
+    dt = datetime.strptime(datetime_str, "%Y-%m-%d")
+    cnt = context["task_instance"].xcom_pull(task_ids="get_api_result_count")
     dto_list: typing.List[AirQualityDTO] = api_service.get_air_quality_list(dt, 1, cnt)
     dict_list = api_service.convert_dto_list_to_dict_list(dto_list)
 
@@ -90,19 +93,19 @@ with DAG(
     schedule_interval="@daily",
     start_date=datetime(2021, 11, 1),
     catchup=True,
-    tags=['air_quality', 'DB']
+    tags=["air_quality", "DB"],
 ) as dag:
     # TODO: Check if the DAG is gathering the air quality of the yesterday
     t1 = PythonOperator(
         task_id="get_api_result_count",
         python_callable=get_api_result_count,
-        op_kwargs={"dt": "{{ ds }}"},
+        op_kwargs={"datetime_str": "{{ ds }}"},
     )
 
     t2 = PythonOperator(
         task_id="insert_data_to_db",
         python_callable=insert_data_to_db,
-        op_kwargs={"dt": "{{ ds }}"},
+        op_kwargs={"datetime_str": "{{ ds }}"},
     )
 
     t1 >> t2
