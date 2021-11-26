@@ -93,6 +93,7 @@ with DAG(
     schedule_interval="@daily",
     start_date=datetime(2021, 11, 1),
     catchup=True,
+    max_active_runs = 5,
     tags=["air_quality", "DB"],
 ) as dag:
     init_sentry()
