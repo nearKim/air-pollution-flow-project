@@ -6,11 +6,11 @@ from functools import lru_cache
 import requests
 
 from dto import AirQualityDTO
+from infra.secret import get_secret_data
 from utils.api import request_data
-from airflow.models import Variable
 
-API_KEY = Variable.get("open_api_key")
-API_ROOT = f"http://openAPI.seoul.go.kr:8088/{API_KEY}/json/TimeAverageAirQuality/"
+API_KEY = get_secret_data("air-pollution/api")["open_api_key"]
+API_ROOT = f"http://openAPI.seoul.go.kr:8088/{API_KEY}/json/TimeAverageAirQuality"
 
 
 class APIService:
@@ -21,7 +21,6 @@ class APIService:
         target_datetime_str = target_datetime.strftime(self.DATE_FORMAT)
         base_url = self.get_api_url(target_datetime_str, 1, 1)
         r = requests.get(base_url)
-        assert r.status_code == 200
 
         raw_data = json.loads(r.text)
         total_count = raw_data["TimeAverageAirQuality"]["list_total_count"]
@@ -39,7 +38,7 @@ class APIService:
         return request_data(url)
 
     def convert_dto_list_to_dict_list(
-            self, dto_list: typing.List[AirQualityDTO]
+        self, dto_list: typing.List[AirQualityDTO]
     ) -> typing.List[typing.Dict]:
         dict_list = [dto.dict() for dto in dto_list]
         return dict_list
