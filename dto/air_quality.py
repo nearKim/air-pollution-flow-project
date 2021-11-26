@@ -14,7 +14,8 @@ class AirQualityDTO(BaseModel):
 
     @validator("measure_datetime_str")
     def strip_double_zeros(cls, value: str):
-        value = value.rstrip("00")
+        if value.endswith("00"):
+            value = value[:-2]
         return value
 
     class Config:
