@@ -4,6 +4,7 @@ from datetime import datetime
 from functools import lru_cache
 
 import requests
+from functional import seq
 
 from dto import AirQualityDTO
 from infra.secret import get_secret_data
@@ -40,7 +41,13 @@ class APIService:
     def convert_dto_list_to_dict_list(
         self, dto_list: typing.List[AirQualityDTO]
     ) -> typing.List[typing.Dict]:
-        dict_list = [dto.dict() for dto in dto_list]
+        def add_datetime(d):
+            measure_datetime_str = d.pop("measure_datetime_str")
+            d["measure_datetime"] = datetime.strptime(measure_datetime_str, "%Y%m%d%H")
+            return d
+
+        dict_list = seq(dto_list).map(lambda d: d.dict()).map(add_datetime).to_list()
+
         return dict_list
 
 
