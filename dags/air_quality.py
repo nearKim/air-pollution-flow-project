@@ -20,7 +20,7 @@ from sqlalchemy.dialects.mysql import insert
 from dto import AirQualityDTO
 from infra.db import engine
 from services.api import api_service
-from utils.sentry import capture_exception_to_sentry
+from utils.sentry import capture_exception_to_sentry, init_sentry
 
 metadata = MetaData()
 
@@ -95,6 +95,8 @@ with DAG(
     catchup=True,
     tags=["air_quality", "DB"],
 ) as dag:
+    init_sentry()
+
     # TODO: Check if the DAG is gathering the air quality of the yesterday
     t1 = PythonOperator(
         task_id="get_api_result_count",
