@@ -16,7 +16,7 @@ class AirQualityDTO(BaseModel):
     def measure_datetime(self) -> datetime.datetime:
         return datetime.datetime.strptime(self.measure_datetime_str, "%Y%m%d%H")
 
-    @validator("measure_datetime")
+    @validator("measure_datetime_str")
     def strip_double_zeros(cls, value: str):
         value = value.rstrip("00")
         return value
