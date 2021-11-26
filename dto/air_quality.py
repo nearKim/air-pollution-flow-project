@@ -3,7 +3,7 @@ from pydantic import BaseModel, validator, Field
 
 
 class AirQualityDTO(BaseModel):
-    measure_datetime: datetime.datetime = Field(..., alias="MSRDT")
+    measure_datetime_str: str = Field(..., alias="MSRDT")
     location: str = Field(..., alias="MSRSTE_NM")
     no2: float
     o3: float
@@ -12,10 +12,14 @@ class AirQualityDTO(BaseModel):
     pm10: float
     pm25: float
 
+    @property
+    def measure_datetime(self) -> datetime.datetime:
+        return datetime.datetime.strptime(self.measure_datetime_str, "%Y%m%d%H")
+
     @validator("measure_datetime")
-    def string_to_datetime(cls, value: str) -> datetime.datetime:
+    def strip_double_zeros(cls, value: str):
         value = value.rstrip("00")
-        return datetime.datetime.strptime(value, "%Y%m%d%H")
+        return value
 
     class Config:
         @classmethod
