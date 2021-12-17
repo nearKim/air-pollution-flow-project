@@ -14,7 +14,7 @@ API_KEY = get_secret_data("air-pollution/api")["open_api_key"]
 API_ROOT = f"http://openAPI.seoul.go.kr:8088/{API_KEY}/json/TimeAverageAirQuality"
 
 
-class APIService:
+class AirQualityService:
     DATE_FORMAT = "%Y%m%d"
 
     @lru_cache(maxsize=None)
@@ -51,4 +51,4 @@ class APIService:
         return dict_list
 
 
-api_service = APIService()
+air_quality_service = AirQualityService()

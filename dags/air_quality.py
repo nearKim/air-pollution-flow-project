@@ -19,7 +19,7 @@ from sqlalchemy.dialects.mysql import insert
 
 from dto import AirQualityDTO
 from infra.db import engine
-from services.api import api_service
+from services.air_quality import air_quality_service
 from utils.sentry import capture_exception_to_sentry, init_sentry
 
 metadata = MetaData()
@@ -45,7 +45,7 @@ air_quality = Table(
 @capture_exception_to_sentry
 def get_api_result_count(datetime_str: str, **context) -> int:
     dt = datetime.strptime(datetime_str, "%Y-%m-%d")
-    cnt = api_service.get_result_count(dt)
+    cnt = air_quality_service.get_result_count(dt)
     return cnt
 
 
@@ -53,8 +53,8 @@ def get_api_result_count(datetime_str: str, **context) -> int:
 def insert_data_to_db(datetime_str: str, **context) -> typing.NoReturn:
     dt = datetime.strptime(datetime_str, "%Y-%m-%d")
     cnt = context["task_instance"].xcom_pull(task_ids="get_api_result_count")
-    dto_list: typing.List[AirQualityDTO] = api_service.get_air_quality_list(dt, 1, cnt)
-    dict_list = api_service.convert_dto_list_to_dict_list(dto_list)
+    dto_list: typing.List[AirQualityDTO] = air_quality_service.get_air_quality_list(dt, 1, cnt)
+    dict_list = air_quality_service.convert_dto_list_to_dict_list(dto_list)
 
     stmt_list = []
     for d in dict_list:
