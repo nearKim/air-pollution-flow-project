@@ -10,7 +10,7 @@ class QualityEnum(str, Enum):
     결측 = "NULL"
 
 
-class WindDTO(BaseModel):
+class WindInfoDTO(BaseModel):
     measure_datetime_str: str = Field(alias="tm", description="일시")
     station_id: int = Field(alias="stnId", description="종관기상관측 지점 번호")
     station_name: str = Field(alias="stnNm", description="종관기상관측 지점명")
