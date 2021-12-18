@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.decorators import task
 from airflow.operators.dummy import DummyOperator
+from airflow.utils.task_group import TaskGroup
 from geoalchemy2 import Geometry
 from sqlalchemy import (
     TIMESTAMP,
@@ -129,9 +130,10 @@ with DAG(
 
     start = DummyOperator(task_id="start")
 
-    measure_center_id_list = get_measure_center_id_list()
-    dumb_result = insert_data_to_db(measure_center_id_list)
+    with TaskGroup("update_db") as tg:
+        measure_center_id_list = get_measure_center_id_list()
+        dumb_result = insert_data_to_db(measure_center_id_list)
 
     end = DummyOperator(task_id="end")
 
-    start >> measure_center_id_list >> dumb_result >> end
+    start >> tg >> end
