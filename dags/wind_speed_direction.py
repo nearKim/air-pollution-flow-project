@@ -117,7 +117,7 @@ default_args = {
 }
 
 with DAG(
-    "insert_wind_data_to_db",
+    "insert_wind_info_to_db",
     default_args=default_args,
     description="기상청 ASOS API의 시간자료를 DB에 업데이트합니다.",
     schedule_interval="@daily",
