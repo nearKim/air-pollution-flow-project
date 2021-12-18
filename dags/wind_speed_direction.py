@@ -135,4 +135,3 @@ with DAG(
     end = DummyOperator(task_id="end")
 
     start >> measure_center_id_list
-    insert_data_to_db >> end
