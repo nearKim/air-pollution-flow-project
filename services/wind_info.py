@@ -2,10 +2,11 @@ import typing
 from datetime import datetime
 
 import requests
+from functional import seq
+
 from dto.wind import WindInfoDTO
 from infra.secret import get_secret_data
-
-from utils.common import convert_empty_string_value_to_null
+from utils.common import add_datetime_to_dict, convert_empty_string_value_to_null
 
 API_KEY = get_secret_data("air-pollution/api")["asos_api_key"]
 API_ROOT = (
@@ -43,6 +44,14 @@ class WindInfoService:
         url = self.get_api_url(target_datetime, station_id)
         return self.request_data(url)
 
+    def convert_dto_list_to_dict_list(
+        self, dto_list: typing.List[WindInfoDTO]
+    ) -> typing.List[typing.Dict]:
+        dict_list = (
+            seq(dto_list).map(lambda d: d.dict()).map(add_datetime_to_dict).to_list()
+        )
+
+        return dict_list
+
 
 wind_info_service = WindInfoService()
-

@@ -87,7 +87,7 @@ class WindInfoDTO(BaseModel):
         elif value == 1:
             en = QualityEnum.오류
         elif value == 9:
-            en = QualityEnum.오류
+            en = QualityEnum.결측
         else:
             raise ValueError(f"QualityEnum으로 파싱할 수 없습니다. {value}")
         return en
