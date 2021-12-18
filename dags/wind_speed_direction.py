@@ -128,7 +128,7 @@ with DAG(
         task_id="get_measure_center_id_list", python_callable=get_measure_center_id_list
     )
 
-    measure_center_id_list: typing.List[int] = t1.output
+    measure_center_id_list: typing.List[int] = t1.output["get_measure_center_id_list"]
 
     for center_id in measure_center_id_list:
         t = PythonOperator(
