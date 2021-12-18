@@ -2,8 +2,8 @@ import typing
 from datetime import datetime, timedelta
 
 from airflow import DAG
+from airflow.decorators import task
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.python import PythonOperator
 from geoalchemy2 import Geometry
 from sqlalchemy import (
     TIMESTAMP,
@@ -80,7 +80,7 @@ wind_info = Table(
 )
 
 
-@capture_exception_to_sentry
+@task()
 def get_measure_center_id_list() -> typing.List[int]:
     with engine.connect() as conn:
         stmt = select([wind_info_measure_center.c.official_code])
@@ -88,12 +88,18 @@ def get_measure_center_id_list() -> typing.List[int]:
     return [r[0] for r in result]
 
 
-@capture_exception_to_sentry
-def insert_data_to_db(datetime_str: str, center_id: int, **context) -> None:
+@task()
+def insert_data_to_db(center_id_list: typing.List[int], **context) -> None:
+    datetime_str = context["ds"]
     dt = datetime.strptime(datetime_str, "%Y-%m-%d")
-    dto_list: typing.List[WindInfoDTO] = wind_info_service.get_wind_info_list(
-        target_datetime=dt, station_id=center_id
-    )
+    dto_list: typing.List[WindInfoDTO] = []
+
+    for center_id in center_id_list:
+        center_dto_list = wind_info_service.get_wind_info_list(
+            target_datetime=dt, station_id=center_id
+        )
+        dto_list.extend(center_dto_list)
+
     dict_list = wind_info_service.convert_dto_list_to_dict_list(dto_list)
 
     with engine.connect() as conn:
@@ -122,18 +128,11 @@ with DAG(
     init_sentry()
 
     start = DummyOperator(task_id="start")
+
+    measure_center_id_list = get_measure_center_id_list()
+    insert_data_to_db(measure_center_id_list)
+
     end = DummyOperator(task_id="end")
 
-    t1 = PythonOperator(
-        task_id="get_measure_center_id_list", python_callable=get_measure_center_id_list
-    )
-
-    measure_center_id_list: typing.List[int] = t1.output["get_measure_center_id_list"]
-
-    for center_id in measure_center_id_list:
-        t = PythonOperator(
-            task_id=f"insert_data_to_db_{center_id}",
-            python_callable=insert_data_to_db,
-            op_kwargs={"datetime_str": "{{ ds }}", "center_id": center_id},
-        )
-        t1 >> t >> end
+    start >> measure_center_id_list
+    insert_data_to_db >> end
