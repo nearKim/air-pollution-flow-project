@@ -22,7 +22,7 @@ from sqlalchemy import (
 from dto.wind import QualityEnum, WindInfoDTO
 from infra.db import engine
 from services.wind_info import wind_info_service
-from utils.sentry import capture_exception_to_sentry, init_sentry
+from utils.sentry import init_sentry
 
 metadata = MetaData()
 
@@ -130,8 +130,8 @@ with DAG(
     start = DummyOperator(task_id="start")
 
     measure_center_id_list = get_measure_center_id_list()
-    insert_data_to_db(measure_center_id_list)
+    dumb_result = insert_data_to_db(measure_center_id_list)
 
     end = DummyOperator(task_id="end")
 
-    start >> measure_center_id_list
+    start >> measure_center_id_list >> dumb_result >> end
