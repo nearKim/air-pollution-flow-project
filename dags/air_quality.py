@@ -1,19 +1,18 @@
-from datetime import datetime, timedelta
-
 import typing
+from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from sqlalchemy import (
-    Table,
-    Float,
     TIMESTAMP,
-    Column,
-    String,
     BigInteger,
-    MetaData,
-    UniqueConstraint,
+    Column,
     FetchedValue,
+    Float,
+    MetaData,
+    String,
+    Table,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.mysql import insert
 
@@ -53,7 +52,9 @@ def get_api_result_count(datetime_str: str, **context) -> int:
 def insert_data_to_db(datetime_str: str, **context) -> typing.NoReturn:
     dt = datetime.strptime(datetime_str, "%Y-%m-%d")
     cnt = context["task_instance"].xcom_pull(task_ids="get_api_result_count")
-    dto_list: typing.List[AirQualityDTO] = air_quality_service.get_air_quality_list(dt, 1, cnt)
+    dto_list: typing.List[AirQualityDTO] = air_quality_service.get_air_quality_list(
+        dt, 1, cnt
+    )
     dict_list = air_quality_service.convert_dto_list_to_dict_list(dto_list)
 
     stmt_list = []
@@ -91,9 +92,9 @@ with DAG(
     default_args=default_args,
     description="서울시 대기환경 API의 리스폰스를 DB에 업데이트합니다.",
     schedule_interval="@daily",
-    start_date=datetime(2021, 11, 1),
+    start_date=datetime(2018, 1, 1),
     catchup=True,
-    max_active_runs = 5,
+    max_active_runs=5,
     tags=["air_quality", "DB"],
 ) as dag:
     init_sentry()
