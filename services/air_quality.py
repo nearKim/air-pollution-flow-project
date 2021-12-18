@@ -8,13 +8,13 @@ from functional import seq
 
 from dto import AirQualityDTO
 from infra.secret import get_secret_data
-from utils.api import request_data
+from utils.common import add_datetime_to_dict
 
 API_KEY = get_secret_data("air-pollution/api")["open_api_key"]
 API_ROOT = f"http://openAPI.seoul.go.kr:8088/{API_KEY}/json/TimeAverageAirQuality"
 
 
-class APIService:
+class AirQualityService:
     DATE_FORMAT = "%Y%m%d"
 
     @lru_cache(maxsize=None)
@@ -31,24 +31,28 @@ class APIService:
         url = f"{API_ROOT}/{start_idx}/{end_idx}/{target_date_str}"
         return url
 
+    def request_data(self, url) -> typing.List[AirQualityDTO]:
+        r = requests.get(url)
+        assert r.status_code == 200
+        j = r.json()
+        data_list: typing.List[dict] = j["TimeAverageAirQuality"]["row"]
+        return [AirQualityDTO(**d) for d in data_list]
+
     def get_air_quality_list(
         self, target_datetime: datetime, start_idx: int, end_idx: int
     ) -> typing.List[AirQualityDTO]:
         target_datetime_str = target_datetime.strftime(self.DATE_FORMAT)
         url = self.get_api_url(target_datetime_str, start_idx, end_idx)
-        return request_data(url)
+        return self.request_data(url)
 
     def convert_dto_list_to_dict_list(
         self, dto_list: typing.List[AirQualityDTO]
     ) -> typing.List[typing.Dict]:
-        def add_datetime(d):
-            measure_datetime_str = d.pop("measure_datetime_str")
-            d["measure_datetime"] = datetime.strptime(measure_datetime_str, "%Y%m%d%H")
-            return d
-
-        dict_list = seq(dto_list).map(lambda d: d.dict()).map(add_datetime).to_list()
+        dict_list = (
+            seq(dto_list).map(lambda d: d.dict()).map(add_datetime_to_dict).to_list()
+        )
 
         return dict_list
 
 
-api_service = APIService()
+air_quality_service = AirQualityService()
