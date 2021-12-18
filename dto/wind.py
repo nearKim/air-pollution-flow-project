@@ -81,7 +81,10 @@ class WindInfoDTO(BaseModel):
         "is_ground_temperature_normal",
         pre=True,
     )
-    def convert_to_enum(cls, value: Optional[int]):
+    def convert_to_enum(cls, value: Optional[str]):
+        if value:
+            value = int(value)
+
         if not value:
             en = QualityEnum.정상
         elif value == 1:
