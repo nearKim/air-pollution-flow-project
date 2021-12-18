@@ -47,8 +47,12 @@ class WindInfoService:
     def convert_dto_list_to_dict_list(
         self, dto_list: typing.List[WindInfoDTO]
     ) -> typing.List[typing.Dict]:
+        dt_format = "%Y-%m-%d %H:00"
         dict_list = (
-            seq(dto_list).map(lambda d: d.dict()).map(add_datetime_to_dict).to_list()
+            seq(dto_list)
+            .map(lambda d: d.dict())
+            .map(lambda x: add_datetime_to_dict(x, dt_format))
+            .to_list()
         )
 
         return dict_list
