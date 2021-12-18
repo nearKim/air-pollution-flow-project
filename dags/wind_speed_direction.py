@@ -121,7 +121,7 @@ with DAG(
     default_args=default_args,
     description="기상청 ASOS API의 시간자료를 DB에 업데이트합니다.",
     schedule_interval="@daily",
-    start_date=datetime(2021, 11, 1),
+    start_date=datetime(2018, 1, 1),
     catchup=True,
     max_active_runs=5,
     tags=["wind_info", "DB"],
