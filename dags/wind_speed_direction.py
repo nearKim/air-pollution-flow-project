@@ -20,9 +20,11 @@ from sqlalchemy import (
     select,
 )
 
+from constants import KST
 from dto.wind import QualityEnum, WindInfoDTO
 from infra.db import engine
 from services.wind_info import wind_info_service
+from utils.common import convert_to_kst_datetime
 from utils.sentry import init_sentry
 
 metadata = MetaData()
@@ -91,13 +93,12 @@ def get_measure_center_id_list() -> typing.List[int]:
 
 @task()
 def insert_data_to_db(center_id_list: typing.List[int], **context) -> None:
-    datetime_str = context["ds"]
-    dt = datetime.strptime(datetime_str, "%Y-%m-%d")
+    dtz = convert_to_kst_datetime(context["ds"], "%Y-%m-%d")
     dto_list: typing.List[WindInfoDTO] = []
 
     for center_id in center_id_list:
         center_dto_list = wind_info_service.get_wind_info_list(
-            target_datetime=dt, station_id=center_id
+            target_datetime=dtz, station_id=center_id
         )
         dto_list.extend(center_dto_list)
 
@@ -121,7 +122,7 @@ with DAG(
     default_args=default_args,
     description="기상청 ASOS API의 시간자료를 DB에 업데이트합니다.",
     schedule_interval="@daily",
-    start_date=datetime(2018, 1, 1),
+    start_date=KST.convert(datetime(2018, 1, 1)),
     catchup=True,
     max_active_runs=5,
     tags=["wind_info", "DB"],
