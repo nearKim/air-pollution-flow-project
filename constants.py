@@ -1,3 +1,3 @@
-import pytz
+import pendulum
 
-KST = pytz.timezone("Asia/Seoul")
+KST = pendulum.timezone("Asia/Seoul")

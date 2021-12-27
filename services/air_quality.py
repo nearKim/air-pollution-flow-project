@@ -8,7 +8,7 @@ from functional import seq
 
 from dto import AirQualityDTO
 from infra.secret import get_secret_data
-from utils.common import add_datetime_to_dict
+from utils.common import convert_to_kst_datetime
 
 API_KEY = get_secret_data("air-pollution/api")["open_api_key"]
 API_ROOT = f"http://openAPI.seoul.go.kr:8088/{API_KEY}/json/TimeAverageAirQuality"
@@ -48,6 +48,13 @@ class AirQualityService:
     def convert_dto_list_to_dict_list(
         self, dto_list: typing.List[AirQualityDTO]
     ) -> typing.List[typing.Dict]:
+        def add_datetime_to_dict(d: dict):
+            measure_datetime_str = d.pop("measure_datetime_str")
+            d["measure_datetime"] = convert_to_kst_datetime(
+                measure_datetime_str, "%Y%m%d%H"
+            )
+            return d
+
         dict_list = (
             seq(dto_list).map(lambda d: d.dict()).map(add_datetime_to_dict).to_list()
         )
