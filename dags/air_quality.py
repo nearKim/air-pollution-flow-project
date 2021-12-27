@@ -16,9 +16,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.mysql import insert
 
+from constants import KST
 from dto import AirQualityDTO
 from infra.db import engine
 from services.air_quality import air_quality_service
+from utils.common import get_kst_datetime
 from utils.sentry import capture_exception_to_sentry, init_sentry
 
 metadata = MetaData()
@@ -43,39 +45,35 @@ air_quality = Table(
 
 @capture_exception_to_sentry
 def get_api_result_count(datetime_str: str, **context) -> int:
-    dt = datetime.strptime(datetime_str, "%Y-%m-%d")
-    cnt = air_quality_service.get_result_count(dt)
+    dtz = get_kst_datetime(datetime_str, "%Y-%m-%d")
+    cnt = air_quality_service.get_result_count(dtz)
     return cnt
 
 
 @capture_exception_to_sentry
 def insert_data_to_db(datetime_str: str, **context) -> typing.NoReturn:
-    dt = datetime.strptime(datetime_str, "%Y-%m-%d")
+    dtz = get_kst_datetime(datetime_str, "%Y-%m-%d")
     cnt = context["task_instance"].xcom_pull(task_ids="get_api_result_count")
     dto_list: typing.List[AirQualityDTO] = air_quality_service.get_air_quality_list(
-        dt, 1, cnt
+        dtz, 1, cnt
     )
     dict_list = air_quality_service.convert_dto_list_to_dict_list(dto_list)
 
-    stmt_list = []
-    for d in dict_list:
-        stmt = insert(air_quality).values(**d)
-        stmt = stmt.on_duplicate_key_update(
-            id=stmt.inserted.id,
-            measure_datetime=stmt.inserted.measure_datetime,
-            location=stmt.inserted.location,
-            no2=stmt.inserted.no2,
-            o3=stmt.inserted.o3,
-            co=stmt.inserted.co,
-            so2=stmt.inserted.so2,
-            pm10=stmt.inserted.pm10,
-            pm25=stmt.inserted.pm25,
-        )
-        stmt_list.append(stmt)
+    _stmt = insert(air_quality)
+    stmt = _stmt.on_duplicate_key_update(
+        id=_stmt.inserted.id,
+        measure_datetime=_stmt.inserted.measure_datetime,
+        location=_stmt.inserted.location,
+        no2=_stmt.inserted.no2,
+        o3=_stmt.inserted.o3,
+        co=_stmt.inserted.co,
+        so2=_stmt.inserted.so2,
+        pm10=_stmt.inserted.pm10,
+        pm25=_stmt.inserted.pm25,
+    )
 
     with engine.connect() as conn:
-        for stmt in stmt_list:
-            conn.execute(stmt)
+        conn.execute(stmt, dict_list)
 
 
 default_args = {
@@ -92,7 +90,7 @@ with DAG(
     default_args=default_args,
     description="서울시 대기환경 API의 리스폰스를 DB에 업데이트합니다.",
     schedule_interval="@daily",
-    start_date=datetime(2018, 1, 1),
+    start_date=KST.localize(datetime(2018, 1, 1)),
     catchup=True,
     max_active_runs=5,
     tags=["air_quality", "DB"],
