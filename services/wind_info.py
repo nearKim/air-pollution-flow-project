@@ -6,7 +6,7 @@ from functional import seq
 
 from dto.wind import WindInfoDTO
 from infra.secret import get_secret_data
-from utils.common import add_datetime_to_dict, convert_empty_string_value_to_null
+from utils.common import convert_empty_string_value_to_null, convert_to_kst_datetime
 
 API_KEY = get_secret_data("air-pollution/api")["asos_api_key"]
 API_ROOT = (
@@ -47,12 +47,15 @@ class WindInfoService:
     def convert_dto_list_to_dict_list(
         self, dto_list: typing.List[WindInfoDTO]
     ) -> typing.List[typing.Dict]:
-        dt_format = "%Y-%m-%d %H:00"
+        def add_datetime_to_dict(d: dict):
+            measure_datetime_str = d.pop("measure_datetime_str")
+            d["measure_datetime"] = convert_to_kst_datetime(
+                measure_datetime_str, "%Y-%m-%d %H:00"
+            )
+            return d
+
         dict_list = (
-            seq(dto_list)
-            .map(lambda d: d.dict())
-            .map(lambda x: add_datetime_to_dict(x, dt_format))
-            .to_list()
+            seq(dto_list).map(lambda d: d.dict()).map(add_datetime_to_dict).to_list()
         )
 
         return dict_list

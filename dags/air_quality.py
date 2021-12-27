@@ -20,7 +20,7 @@ from constants import KST
 from dto import AirQualityDTO
 from infra.db import engine
 from services.air_quality import air_quality_service
-from utils.common import get_kst_datetime
+from utils.common import convert_to_kst_datetime
 from utils.sentry import capture_exception_to_sentry, init_sentry
 
 metadata = MetaData()
@@ -45,14 +45,14 @@ air_quality = Table(
 
 @capture_exception_to_sentry
 def get_api_result_count(datetime_str: str, **context) -> int:
-    dtz = get_kst_datetime(datetime_str, "%Y-%m-%d")
+    dtz = convert_to_kst_datetime(datetime_str, "%Y-%m-%d")
     cnt = air_quality_service.get_result_count(dtz)
     return cnt
 
 
 @capture_exception_to_sentry
 def insert_data_to_db(datetime_str: str, **context) -> typing.NoReturn:
-    dtz = get_kst_datetime(datetime_str, "%Y-%m-%d")
+    dtz = convert_to_kst_datetime(datetime_str, "%Y-%m-%d")
     cnt = context["task_instance"].xcom_pull(task_ids="get_api_result_count")
     dto_list: typing.List[AirQualityDTO] = air_quality_service.get_air_quality_list(
         dtz, 1, cnt
@@ -90,7 +90,7 @@ with DAG(
     default_args=default_args,
     description="서울시 대기환경 API의 리스폰스를 DB에 업데이트합니다.",
     schedule_interval="@daily",
-    start_date=KST.localize(datetime(2018, 1, 1)),
+    start_date=datetime(2018, 1, 1, tzinfo=KST),
     catchup=True,
     max_active_runs=5,
     tags=["air_quality", "DB"],
