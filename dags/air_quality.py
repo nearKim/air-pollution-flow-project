@@ -108,6 +108,7 @@ with DAG(
         task_id="insert_data_to_db",
         python_callable=insert_data_to_db,
         op_kwargs={"datetime_str": "{{ ds }}"},
+        retry_delay=timedelta(days=1),
     )
 
     t1 >> t2
