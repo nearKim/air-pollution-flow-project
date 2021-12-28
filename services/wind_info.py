@@ -1,5 +1,6 @@
 import typing
 from datetime import datetime
+from json import JSONDecodeError
 
 import requests
 from functional import seq
@@ -13,6 +14,10 @@ API_ROOT = (
     f"http://apis.data.go.kr/1360000/AsosHourlyInfoService/getWthrDataList?"
     f"serviceKey={API_KEY}&dataType=JSON&dataCd=ASOS&dateCd=HR&pageNo=1&numOfRows=999"
 )
+
+
+class LimitExceededError(Exception):
+    pass
 
 
 class WindInfoService:
@@ -32,8 +37,20 @@ class WindInfoService:
     def request_data(self, url) -> typing.List[WindInfoDTO]:
         r = requests.get(url)
         assert r.status_code == 200
-        j = r.json()
-        data_list: typing.List[dict] = j["response"]["body"]["items"]["item"]
+        try:
+            j = r.json()
+        except JSONDecodeError as e:
+            response_text = r.text
+            if "LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR" in response_text:
+                raise LimitExceededError from e
+            raise e
+        try:
+            data_list: typing.List[dict] = j["response"]["body"]["items"]["item"]
+        except KeyError as e:
+            if j["response"]["header"]["resultMsg"] == "NO_DATA":
+                return []
+            raise e
+
         for data in data_list:
             convert_empty_string_value_to_null(data)
         return [WindInfoDTO(**d) for d in data_list]
