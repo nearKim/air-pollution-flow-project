@@ -1,5 +1,6 @@
 import typing
 from datetime import datetime, timedelta
+from time import sleep
 
 from airflow import DAG
 from airflow.decorators import task
@@ -19,6 +20,7 @@ from sqlalchemy import (
     UniqueConstraint,
     select,
 )
+from sqlalchemy.dialects.mysql import insert
 
 from constants import KST
 from dto.wind import QualityEnum, WindInfoDTO
@@ -101,11 +103,19 @@ def insert_data_to_db(center_id_list: typing.List[int], **context) -> None:
             target_datetime=dtz, station_id=center_id
         )
         dto_list.extend(center_dto_list)
+        sleep(0.1)
 
     dict_list = wind_info_service.convert_dto_list_to_dict_list(dto_list)
 
+    _stmt = insert(wind_info)
+    stmt = _stmt.on_duplicate_key_update(
+        id=_stmt.inserted.id,
+        measure_datetime=_stmt.inserted.measure_datetime,
+        station_id=_stmt.inserted.station_id,
+        station_name=_stmt.inserted.station_name,
+    )
     with engine.connect() as conn:
-        conn.execute(wind_info.insert(), dict_list)
+        conn.execute(stmt, dict_list)
 
 
 default_args = {
