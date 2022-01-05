@@ -3,6 +3,7 @@ from datetime import datetime
 from json import JSONDecodeError
 
 import requests
+import sentry_sdk
 from functional import seq
 
 from dto.wind import WindInfoDTO
@@ -41,6 +42,9 @@ class WindInfoService:
             j = r.json()
         except JSONDecodeError as e:
             response_text = r.text
+            with sentry_sdk.push_scope() as scope:
+                scope.set_tag("json_data", response_text)
+                sentry_sdk.capture_exception(e)
             if "LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR" in response_text:
                 raise LimitExceededError from e
             raise e
