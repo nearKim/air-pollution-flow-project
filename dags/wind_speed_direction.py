@@ -93,7 +93,7 @@ def get_measure_center_id_list() -> typing.List[int]:
     return [r[0] for r in result]
 
 
-@task()
+@task(task_concurrency=1)
 def insert_data_to_db(center_id_list: typing.List[int], **context) -> None:
     dtz = convert_to_kst_datetime(context["ds"], "%Y-%m-%d")
     dto_list: typing.List[WindInfoDTO] = []
