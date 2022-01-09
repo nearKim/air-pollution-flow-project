@@ -134,7 +134,7 @@ with DAG(
     schedule_interval="@daily",
     start_date=KST.convert(datetime(2018, 1, 1)),
     catchup=True,
-    max_active_runs=5,
+    max_active_runs=10,
     tags=["wind_info", "DB"],
 ) as dag:
     init_sentry()
