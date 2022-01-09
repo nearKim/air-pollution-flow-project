@@ -3,7 +3,6 @@ from datetime import datetime
 from json import JSONDecodeError
 
 import requests
-import sentry_sdk
 from functional import seq
 
 from dto.wind import WindInfoDTO
