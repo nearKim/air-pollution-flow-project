@@ -38,8 +38,9 @@ with DAG(
     max_active_tasks=100,
     tags=["example"],
 ) as dag:
-    start = DummyOperator(task_id="start")
-    t1 = PythonOperator(task_id="use_conn", python_callable=use_connection, task_concurrency=70)
+    t1 = PythonOperator(
+        task_id="use_conn", python_callable=use_connection
+    )
     end = DummyOperator(task_id="end")
 
-    start >> t1 >> end
+    t1 >> end
