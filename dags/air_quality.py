@@ -17,7 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.mysql import insert
 
 from constants import KST
-from dto import AirQualityDTO
+from db.dto import AirQualityDTO
 from infra.db import engine
 from services.air_quality import air_quality_service
 from utils.common import convert_to_kst_datetime
