@@ -14,7 +14,7 @@ def use_connection(*args, **kwargs):
     with engine.connect() as conn:
         conn.execute(text("select 1 from air_pollution.air_quality;"))
         print(f"selecting from {os.getpid()} \n", flush=True)
-        conn.execute(text("select sleep 60;"))
+        conn.execute(text("select sleep(60);"))
         print(f"sleeping from {os.getpid()} \n", flush=True)
 
 
