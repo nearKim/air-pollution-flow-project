@@ -34,7 +34,8 @@ with DAG(
     schedule_interval=timedelta(days=1),
     start_date=datetime(2021, 1, 1),
     catchup=True,
-    max_active_runs=60,
+    max_active_runs=70,
+    max_active_tasks=100,
     tags=["example"],
 ) as dag:
     start = DummyOperator(task_id="start")
