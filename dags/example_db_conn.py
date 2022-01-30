@@ -39,7 +39,7 @@ with DAG(
     tags=["example"],
 ) as dag:
     start = DummyOperator(task_id="start")
-    t1 = PythonOperator(task_id="use_conn", python_callable=use_connection)
+    t1 = PythonOperator(task_id="use_conn", python_callable=use_connection, task_concurrency=70)
     end = DummyOperator(task_id="end")
 
     start >> t1 >> end
