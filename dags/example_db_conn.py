@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from time import sleep
 
 from airflow import DAG
-
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
@@ -30,8 +29,8 @@ with DAG(
     default_args=default_args,
     description="db conn test",
     schedule_interval=timedelta(days=1),
-    start_date=datetime(2022, 1, 1),
-    catchup=False,
+    start_date=datetime(2021, 1, 1),
+    catchup=True,
     max_active_runs=100,
     tags=["example"],
 ) as dag:
