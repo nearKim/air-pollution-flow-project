@@ -5,13 +5,16 @@ from time import sleep
 from airflow import DAG
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
+from sqlalchemy import text
 
 from infra.db import engine
 
 
 def use_connection(*args, **kwargs):
     with engine.connect() as conn:
-        sleep(60)
+        conn.execute(text("select 1 from air_pollution.air_quality;"))
+        print(f"selecting from {os.getpid()} \n", flush=True)
+        conn.execute(text("select sleep 60;"))
         print(f"sleeping from {os.getpid()} \n", flush=True)
 
 
