@@ -1,9 +1,15 @@
-import typing
-from datetime import datetime
-
-from pydantic.dataclasses import dataclass
-from sqlalchemy import (TIMESTAMP, BigInteger, Column, FetchedValue, Float,
-                        Integer, MetaData, String, Table, UniqueConstraint)
+from sqlalchemy import (
+    TIMESTAMP,
+    BigInteger,
+    Column,
+    FetchedValue,
+    Float,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    UniqueConstraint,
+)
 
 __all__ = [
     "air_quality",
@@ -12,7 +18,6 @@ __all__ = [
 ]
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import mapper
 
 from infra.sqlalchemy import MysqlGeometry
 
@@ -50,33 +55,32 @@ air_quality = Table(
 )
 
 
-@dataclass
-class AirQualityORM:
-    __table__ = air_quality
+class AirQualityORM(Base):
+    __tablename__ = "air_quality"
 
-    id: int
-    measure_datetime: datetime
-    location: str
-    no2: float
-    o3: float
-    co: float
-    so2: float
-    pm10: float
-    pm25: float
-    upd_ts: datetime
-    reg_ts: datetime
+    id = Column("id", BigInteger, primary_key=True)
+    measure_datetime = Column("measure_datetime", TIMESTAMP)
+    location = Column("location", String(255))
+    no2 = Column("no2", Float)
+    o3 = Column("o3", Float)
+    co = Column("co", Float)
+    so2 = Column("so2", Float)
+    pm10 = Column("pm10", Float)
+    pm25 = Column("pm25", Float)
+    upd_ts = Column("upd_ts", TIMESTAMP, server_onupdate=FetchedValue())
+    reg_ts = Column("reg_ts", TIMESTAMP, server_default=FetchedValue())
 
 
-@dataclass
-class AirQualityMeasureCenterORM:
-    __table__ = air_quality_measure_center
-    id: int
-    address: str
-    location: str
-    official_code: int
-    upd_ts: datetime
-    reg_ts: datetime
-    coordinate: typing.Any  # type: WKBElement
+class AirQualityMeasureCenterORM(Base):
+    __tablename__ = "air_quality_measure_center"
+
+    id = Column("id", BigInteger, primary_key=True)
+    address = Column("address", String(255))
+    location = Column("location", String(255))
+    official_code = Column("official_code", Integer, unique=True)
+    upd_ts = Column("upd_ts", TIMESTAMP, server_onupdate=FetchedValue())
+    reg_ts = Column("reg_ts", TIMESTAMP, server_default=FetchedValue())
+    coordinate = Column("coordinate", MysqlGeometry("POINT"))
 
     @property
     def shape(self):
@@ -91,7 +95,3 @@ class AirQualityMeasureCenterORM:
     @property
     def longitude(self) -> float:
         return self.shape.y
-
-
-mapper(AirQualityORM, air_quality)
-mapper(AirQualityMeasureCenterORM, air_quality_measure_center)

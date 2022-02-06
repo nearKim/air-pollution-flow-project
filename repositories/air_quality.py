@@ -2,10 +2,8 @@ import datetime
 import typing
 from datetime import timedelta
 
-from sqlalchemy import select
-
 from db.dao.air_quality import AirQualityMeasureCenterORM, AirQualityORM
-from infra.db import Session
+from infra.db import session
 
 
 class AirQualityRepository:
@@ -13,21 +11,18 @@ class AirQualityRepository:
         self, measure_date: datetime.date
     ) -> typing.List[AirQualityORM]:
         today, tomorrow = measure_date, measure_date + timedelta(days=1)
-        stmt = select(AirQualityORM).where(
-            AirQualityORM.measure_datetime >= today,
-            AirQualityORM.measure_datetime < tomorrow,
+        lst = (
+            session.query(AirQualityORM)
+            .filter(
+                AirQualityORM.measure_datetime >= today,
+                AirQualityORM.measure_datetime < tomorrow,
+            )
+            .all()
         )
-        with Session() as session:
-            list_or_tuples = session.execute(stmt).all()
-        result = [tup[0] for tup in list_or_tuples]
-        return result
+        return lst
 
     def list_measure_center(self) -> typing.List[AirQualityMeasureCenterORM]:
-        stmt = select(AirQualityMeasureCenterORM)
-
-        with Session() as session:
-            list_or_tuples = session.execute(stmt).all()
-        result = [tup[0] for tup in list_or_tuples]
+        result = session.query(AirQualityMeasureCenterORM).all()
         return result
 
 
