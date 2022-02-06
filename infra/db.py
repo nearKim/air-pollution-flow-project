@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine
+from sqlalchemy.orm import registry, sessionmaker
 
 from infra.secret import get_secret_data
 
@@ -16,3 +17,5 @@ def get_db():
 
 
 engine = get_db()
+mapper_registry = registry()
+Session = sessionmaker(bind=engine)
