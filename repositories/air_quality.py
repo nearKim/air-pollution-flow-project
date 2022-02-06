@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from sqlalchemy import select
 
-from db.dao.air_quality import AirQualityORM
+from db.dao.air_quality import AirQualityMeasureCenterORM, AirQualityORM
 from infra.db import Session
 
 
@@ -17,6 +17,14 @@ class AirQualityRepository:
             AirQualityORM.measure_datetime >= today,
             AirQualityORM.measure_datetime < tomorrow,
         )
+        with Session() as session:
+            list_or_tuples = session.execute(stmt).all()
+        result = [tup[0] for tup in list_or_tuples]
+        return result
+
+    def list_measure_center(self) -> typing.List[AirQualityMeasureCenterORM]:
+        stmt = select(AirQualityMeasureCenterORM)
+
         with Session() as session:
             list_or_tuples = session.execute(stmt).all()
         result = [tup[0] for tup in list_or_tuples]
