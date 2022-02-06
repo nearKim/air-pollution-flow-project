@@ -8,7 +8,7 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
 
 from constants import KST, TMP_DIR
-from db.dao.air_quality import AirQualityORM
+from db.dto.air_quality import AirQualityWithMeasureCenterInfoDTO
 from repositories.air_quality import air_quality_repository
 from services.air_quality import air_quality_service
 from utils.aws import upload_file
@@ -27,20 +27,30 @@ def delete_file_dir_path(datetime_str: str, **context):
     shutil.rmtree(p)
 
 
-def get_db_results(datetime_str: str, **context) -> typing.List[AirQualityORM]:
+def get_db_results(
+    datetime_str: str, **context
+) -> typing.List[AirQualityWithMeasureCenterInfoDTO]:
     today = convert_to_kst_datetime(datetime_str, "%Y-%m-%d")
-    result = air_quality_service.get_measured_air_quality_list(
+    air_quality_orm_list = air_quality_service.get_measured_air_quality_list(
         today, air_quality_repository
     )
-    return result
+    measure_center_list = air_quality_service.list_air_quality_measure_center_list(
+        air_quality_repository
+    )
+    dto_list: typing.List[
+        AirQualityWithMeasureCenterInfoDTO
+    ] = air_quality_service.get_air_quality_with_measure_center_info(
+        air_quality_orm_list, measure_center_list
+    )
+    return dto_list
 
 
 def insert_to_s3(datetime_str: str, **context):
     today = convert_to_kst_datetime(datetime_str, "%Y-%m-%d").date()
-    air_quality_orm_list: typing.List[AirQualityORM] = context[
+    dto_list: typing.List[AirQualityWithMeasureCenterInfoDTO] = context[
         "task_instance"
     ].xcom_pull(task_ids="get_db_results")
-    json_str: str = air_quality_service.serialize_to_json(air_quality_orm_list)
+    json_str: str = air_quality_service.serialize_to_json(dto_list)
 
     json_string_to_parquet(datetime_str, json_str)
     upload_file(
