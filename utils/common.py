@@ -29,7 +29,7 @@ def save_parquet_data_to_file(path: str, table: "Table"):
     pq.write_table(table, f"{path}/data.parquet")
 
 
-def json_string_to_parquet(datetime_str, json_str: str) -> typing.NoReturn:
+def save_json_string_to_parquet(datetime_str, json_str: str) -> typing.NoReturn:
     file_dir_path = f"{TMP_DIR}/{datetime_str}"
     save_json_data_to_file(file_dir_path, json_str)
     table = get_pyarrow_table_from_tmp_dir(file_dir_path)
