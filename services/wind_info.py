@@ -5,7 +5,7 @@ from json import JSONDecodeError
 import requests
 from functional import seq
 
-from dto.wind import WindInfoDTO
+from db.dto import WindInfoDTO
 from infra.secret import get_secret_data
 from utils.common import convert_empty_string_value_to_null, convert_to_kst_datetime
 

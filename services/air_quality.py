@@ -1,13 +1,16 @@
 import json
 import typing
+from dataclasses import asdict
 from datetime import datetime
 from functools import lru_cache
 
 import requests
 from functional import seq
 
-from dto import AirQualityDTO
+from db.dao.air_quality import AirQualityORM
+from db.dto import AirQualityDTO
 from infra.secret import get_secret_data
+from repositories.air_quality import AirQualityRepository
 from utils.common import convert_to_kst_datetime
 
 API_KEY = get_secret_data("air-pollution/api")["open_api_key"]
@@ -60,6 +63,23 @@ class AirQualityService:
         )
 
         return dict_list
+
+    def get_measured_air_quality_list(
+        self, target_datetime: datetime, repository: AirQualityRepository
+    ) -> typing.List[AirQualityORM]:
+        air_quality_orm_list: typing.List[
+            AirQualityORM
+        ] = repository.get_by_measure_date(target_datetime.date())
+        return air_quality_orm_list
+
+    def serialize_to_json(self, orm_list: typing.List[AirQualityORM]) -> str:
+        def serialize_to_json(j) -> str:
+            return json.dumps(j, default=str, ensure_ascii=False)
+
+        orm_list = (
+            seq(orm_list).map(lambda orm: asdict(orm)).map(serialize_to_json).list()
+        )
+        return "\n".join(orm_list)
 
 
 air_quality_service = AirQualityService()

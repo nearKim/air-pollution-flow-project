@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from geoalchemy2 import Geometry
+from pydantic.dataclasses import dataclass
 from sqlalchemy import (
     TIMESTAMP,
     BigInteger,
@@ -12,7 +15,9 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 
-__all__ = ["air_quality"]
+__all__ = ["air_quality", "AirQualityORM"]
+
+from infra.db import mapper_registry
 
 metadata = MetaData()
 
@@ -44,3 +49,23 @@ air_quality = Table(
     Column("reg_ts", TIMESTAMP, server_default=FetchedValue()),
     UniqueConstraint("measure_datetime", "location"),
 )
+
+
+@dataclass
+class AirQualityORM:
+    __table__ = air_quality
+
+    id: int
+    measure_datetime: datetime
+    location: str
+    no2: float
+    o3: float
+    co: float
+    so2: float
+    pm10: float
+    pm25: float
+    upd_ts: datetime
+    reg_ts: datetime
+
+
+mapper_registry.map_imperatively(AirQualityORM, air_quality)

@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, timedelta
-from time import sleep
 
 from airflow import DAG
 from airflow.operators.dummy import DummyOperator
@@ -38,9 +37,7 @@ with DAG(
     max_active_tasks=100,
     tags=["example"],
 ) as dag:
-    t1 = PythonOperator(
-        task_id="use_conn", python_callable=use_connection
-    )
+    t1 = PythonOperator(task_id="use_conn", python_callable=use_connection)
     end = DummyOperator(task_id="end")
 
     t1 >> end
