@@ -71,7 +71,8 @@ default_args = {
 
 with DAG(
     dag_id="air_quality_dw",
-    schedule_interval=None,
+    default_args=default_args,
+    schedule_interval="@daily",
     start_date=datetime(2018, 1, 1, tzinfo=KST),
     catchup=True,
     max_active_runs=10,
