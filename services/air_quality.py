@@ -7,8 +7,9 @@ from functools import lru_cache
 import requests
 from functional import seq
 
-from db.dao.air_quality import AirQualityORM
+from db.dao.air_quality import AirQualityMeasureCenterORM, AirQualityORM
 from db.dto import AirQualityDTO
+from db.dto.air_quality import AirQualityWithMeasureCenterInfoDTO
 from infra.secret import get_secret_data
 from repositories.air_quality import AirQualityRepository
 from utils.common import convert_to_kst_datetime
@@ -72,14 +73,46 @@ class AirQualityService:
         ] = repository.get_by_measure_date(target_datetime.date())
         return air_quality_orm_list
 
-    def serialize_to_json(self, orm_list: typing.List[AirQualityORM]) -> str:
+    def list_air_quality_measure_center_list(
+        self, repository: AirQualityRepository
+    ) -> typing.List[AirQualityMeasureCenterORM]:
+        orm_list: typing.List[
+            AirQualityMeasureCenterORM
+        ] = repository.list_measure_center()
+        return orm_list
+
+    def get_air_quality_with_measure_center_info(
+        self, air_quality_orm_list, measure_center_orm_list
+    ) -> typing.List[AirQualityWithMeasureCenterInfoDTO]:
+        result = []
+        for air_quality in air_quality_orm_list:
+            air_quality: AirQualityORM
+            center = [
+                c for c in measure_center_orm_list if c.location == air_quality.location
+            ]
+            assert len(center) == 1
+            center = center[0]
+
+            dto = AirQualityWithMeasureCenterInfoDTO(
+                **asdict(air_quality),
+                measure_center_address=center.address,
+                measure_center_official_code=center.official_code,
+                measure_center_latitude=center.latitude,
+                measure_center_longitude=center.longitude,
+            )
+            result.append(dto)
+        return result
+
+    def serialize_to_json(
+        self, dto_list: typing.List[AirQualityWithMeasureCenterInfoDTO]
+    ) -> str:
         def serialize_to_json(j) -> str:
             return json.dumps(j, default=str, ensure_ascii=False)
 
-        orm_list = (
-            seq(orm_list).map(lambda orm: asdict(orm)).map(serialize_to_json).list()
+        dto_list = (
+            seq(dto_list).map(lambda orm: asdict(orm)).map(serialize_to_json).list()
         )
-        return "\n".join(orm_list)
+        return "\n".join(dto_list)
 
 
 air_quality_service = AirQualityService()

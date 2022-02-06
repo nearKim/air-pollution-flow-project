@@ -1,24 +1,21 @@
+import typing
 from datetime import datetime
 
 from pydantic.dataclasses import dataclass
-from sqlalchemy import (
-    TIMESTAMP,
-    BigInteger,
-    Column,
-    FetchedValue,
-    Float,
-    Integer,
-    MetaData,
-    String,
-    Table,
-    UniqueConstraint,
-)
+from sqlalchemy import (TIMESTAMP, BigInteger, Column, FetchedValue, Float,
+                        Integer, MetaData, String, Table, UniqueConstraint)
 
-__all__ = ["air_quality_measure_center", "air_quality", "AirQualityORM"]
+__all__ = [
+    "air_quality",
+    "AirQualityORM",
+    "AirQualityMeasureCenterORM",
+]
 
-from sqlalchemy.orm import mapper
+from sqlalchemy.orm import declarative_base, mapper
 
 from infra.sqlalchemy import MysqlGeometry
+
+Base = declarative_base()
 
 metadata = MetaData()
 
@@ -70,7 +67,7 @@ class AirQualityORM:
 
 
 @dataclass
-class AirQualityMeasureCenter:
+class AirQualityMeasureCenterORM:
     __table__ = air_quality_measure_center
     id: int
     address: str
@@ -78,7 +75,22 @@ class AirQualityMeasureCenter:
     official_code: int
     upd_ts: datetime
     reg_ts: datetime
-    coordinate: int
+    coordinate: typing.Any  # type: WKBElement
+
+    @property
+    def shape(self):
+        from geoalchemy2.shape import to_shape
+
+        return to_shape(self.coordinate)
+
+    @property
+    def latitude(self) -> float:
+        return self.shape.x
+
+    @property
+    def longitude(self) -> float:
+        return self.shape.y
 
 
 mapper(AirQualityORM, air_quality)
+mapper(AirQualityMeasureCenterORM, air_quality_measure_center)
