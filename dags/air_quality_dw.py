@@ -12,7 +12,7 @@ from db.dto.air_quality import AirQualityWithMeasureCenterInfoDTO
 from repositories.air_quality import air_quality_repository
 from services.air_quality import air_quality_service
 from utils.aws import upload_file
-from utils.common import convert_to_kst_datetime, json_string_to_parquet
+from utils.common import convert_to_kst_datetime, save_json_string_to_parquet
 from utils.sentry import init_sentry
 
 BUCKET_NAME = "air-pollution-project-data"
@@ -27,9 +27,7 @@ def delete_file_dir_path(datetime_str: str, **context):
     shutil.rmtree(p)
 
 
-def get_db_results(
-    datetime_str: str, **context
-) -> typing.List[AirQualityWithMeasureCenterInfoDTO]:
+def save_db_data_to_parquet_file(datetime_str: str, **context):
     today = convert_to_kst_datetime(datetime_str, "%Y-%m-%d")
     air_quality_orm_list = air_quality_service.get_measured_air_quality_list(
         today, air_quality_repository
@@ -42,17 +40,13 @@ def get_db_results(
     ] = air_quality_service.get_air_quality_with_measure_center_info(
         air_quality_orm_list, measure_center_list
     )
-    return dto_list
+    json_str: str = air_quality_service.serialize_to_json(dto_list)
+    save_json_string_to_parquet(datetime_str, json_str)
 
 
 def insert_to_s3(datetime_str: str, **context):
     today = convert_to_kst_datetime(datetime_str, "%Y-%m-%d").date()
-    dto_list: typing.List[AirQualityWithMeasureCenterInfoDTO] = context[
-        "task_instance"
-    ].xcom_pull(task_ids="get_db_results")
-    json_str: str = air_quality_service.serialize_to_json(dto_list)
 
-    json_string_to_parquet(datetime_str, json_str)
     upload_file(
         f"{TMP_DIR}/{datetime_str}/data.parquet",
         BUCKET_NAME,
@@ -88,8 +82,8 @@ with DAG(
         op_kwargs={"datetime_str": "{{ ds }}"},
     )
     t1 = PythonOperator(
-        task_id="get_db_results",
-        python_callable=get_db_results,
+        task_id="save_db_data_to_parquet_file",
+        python_callable=save_db_data_to_parquet_file,
         op_kwargs={"datetime_str": "{{ ds }}"},
     )
 
