@@ -1,4 +1,3 @@
-from geoalchemy2 import Geometry
 from sqlalchemy import (
     TIMESTAMP,
     BigInteger,
@@ -13,8 +12,10 @@ from sqlalchemy import (
 )
 
 from db.dto import QualityEnum
+from infra.sqlalchemy import MysqlGeometry
 
 metadata = MetaData()
+
 wind_info_measure_center = Table(
     "wind_info_measure_center",
     metadata,
@@ -23,8 +24,9 @@ wind_info_measure_center = Table(
     Column("location", String(255), unique=True),
     Column("official_code", Integer, unique=True),
     Column("height", Float),
-    Column("coordinate", Geometry("POINT")),
+    Column("coordinate", MysqlGeometry("POINT")),
 )
+
 wind_info = Table(
     "wind_info",
     metadata,

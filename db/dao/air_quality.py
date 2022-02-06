@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from geoalchemy2 import Geometry
 from pydantic.dataclasses import dataclass
 from sqlalchemy import (
     TIMESTAMP,
@@ -15,9 +14,11 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 
-__all__ = ["air_quality", "AirQualityORM"]
+__all__ = ["air_quality_measure_center", "air_quality", "AirQualityORM"]
 
 from sqlalchemy.orm import mapper
+
+from infra.sqlalchemy import MysqlGeometry
 
 metadata = MetaData()
 
@@ -30,7 +31,7 @@ air_quality_measure_center = Table(
     Column("official_code", Integer, unique=True),
     Column("upd_ts", TIMESTAMP, server_onupdate=FetchedValue()),
     Column("reg_ts", TIMESTAMP, server_default=FetchedValue()),
-    Column("coordinate", Geometry("POINT")),
+    Column("coordinate", MysqlGeometry("POINT")),
 )
 
 air_quality = Table(
@@ -66,6 +67,18 @@ class AirQualityORM:
     pm25: float
     upd_ts: datetime
     reg_ts: datetime
+
+
+@dataclass
+class AirQualityMeasureCenter:
+    __table__ = air_quality_measure_center
+    id: int
+    address: str
+    location: str
+    official_code: int
+    upd_ts: datetime
+    reg_ts: datetime
+    coordinate: int
 
 
 mapper(AirQualityORM, air_quality)
