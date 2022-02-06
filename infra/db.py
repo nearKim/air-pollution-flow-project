@@ -17,4 +17,4 @@ def get_db():
 
 
 engine = get_db()
-Session = sessionmaker(bind=engine)
+session = sessionmaker(bind=engine)()

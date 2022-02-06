@@ -1,6 +1,5 @@
 import json
 import typing
-from dataclasses import asdict
 from datetime import datetime
 from functools import lru_cache
 
@@ -94,7 +93,7 @@ class AirQualityService:
             center = center[0]
 
             dto = AirQualityWithMeasureCenterInfoDTO(
-                **asdict(air_quality),
+                **air_quality.__dict__,
                 measure_center_address=center.address,
                 measure_center_official_code=center.official_code,
                 measure_center_latitude=center.latitude,
@@ -110,7 +109,7 @@ class AirQualityService:
             return json.dumps(j, default=str, ensure_ascii=False)
 
         dto_list = (
-            seq(dto_list).map(lambda orm: asdict(orm)).map(serialize_to_json).list()
+            seq(dto_list).map(lambda orm: orm.__dict__).map(serialize_to_json).list()
         )
         return "\n".join(dto_list)
 
