@@ -87,8 +87,13 @@ with DAG(
         python_callable=create_file_dir_path,
         op_kwargs={"datetime_str": "{{ ds }}"},
     )
-
     t1 = PythonOperator(
+        task_id="get_db_results",
+        python_callable=get_db_results,
+        op_kwargs={"datetime_str": "{{ ds }}"},
+    )
+
+    t2 = PythonOperator(
         task_id="insert_to_s3",
         python_callable=insert_to_s3,
         op_kwargs={"datetime_str": "{{ ds }}"},
@@ -101,4 +106,4 @@ with DAG(
     )
     end = DummyOperator(task_id="end")
 
-    start >> create_tmp_dir >> t1 >> delete_tmp_dir >> end
+    start >> create_tmp_dir >> t1 >> t2 >> delete_tmp_dir >> end
