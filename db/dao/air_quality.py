@@ -11,7 +11,8 @@ __all__ = [
     "AirQualityMeasureCenterORM",
 ]
 
-from sqlalchemy.orm import declarative_base, mapper
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import mapper
 
 from infra.sqlalchemy import MysqlGeometry
 
