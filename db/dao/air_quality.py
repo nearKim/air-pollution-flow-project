@@ -17,7 +17,7 @@ from sqlalchemy import (
 
 __all__ = ["air_quality", "AirQualityORM"]
 
-from infra.db import mapper_registry
+from sqlalchemy.orm import mapper
 
 metadata = MetaData()
 
@@ -68,4 +68,4 @@ class AirQualityORM:
     reg_ts: datetime
 
 
-mapper_registry.map_imperatively(AirQualityORM, air_quality)
+mapper(AirQualityORM, air_quality)
