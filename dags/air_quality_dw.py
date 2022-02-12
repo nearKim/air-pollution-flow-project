@@ -46,11 +46,11 @@ def save_db_data_to_parquet_file(datetime_str: str, **context):
 
 def insert_to_s3(datetime_str: str, **context):
     today = convert_to_kst_datetime(datetime_str, "%Y-%m-%d").date()
-
+    path = f"{BUCKET_NAME}/air_quality/measure_date={str(today)}"
     upload_file(
         f"{TMP_DIR}/{datetime_str}/data.parquet",
-        BUCKET_NAME,
-        f"air_quality__{str(today)}.parquet",
+        path,
+        f"data__{str(today)}.parquet",
     )
 
 
@@ -65,6 +65,7 @@ default_args = {
 
 with DAG(
     dag_id="air_quality_dw",
+    description="대기오염 정보를 S3에 저장합니다.",
     default_args=default_args,
     schedule_interval="@daily",
     start_date=datetime(2018, 1, 1, tzinfo=KST),
