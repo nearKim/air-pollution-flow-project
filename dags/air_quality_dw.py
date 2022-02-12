@@ -12,7 +12,11 @@ from db.dto.air_quality import AirQualityWithMeasureCenterInfoDTO
 from repositories.air_quality import air_quality_repository
 from services.air_quality import air_quality_service
 from utils.aws import upload_file
-from utils.common import convert_to_kst_datetime, save_json_string_to_parquet
+from utils.common import (
+    convert_to_kst_datetime,
+    save_json_string_to_parquet,
+    serialize_to_json,
+)
 from utils.sentry import init_sentry
 
 BUCKET_NAME = "air-pollution-project-data"
@@ -40,8 +44,8 @@ def save_db_data_to_parquet_file(datetime_str: str, **context):
     ] = air_quality_service.get_air_quality_with_measure_center_info(
         air_quality_orm_list, measure_center_list
     )
-    json_str: str = air_quality_service.serialize_to_json(dto_list)
-    save_json_string_to_parquet(datetime_str, json_str)
+    json_str: str = serialize_to_json(dto_list)
+    save_json_string_to_parquet(datetime_str, "air_quality", json_str)
 
 
 def insert_to_s3(datetime_str: str, **context):
@@ -86,6 +90,7 @@ with DAG(
         task_id="save_db_data_to_parquet_file",
         python_callable=save_db_data_to_parquet_file,
         op_kwargs={"datetime_str": "{{ ds }}"},
+        task_concurrency=1,  # filename이 겹칠 수 있음
     )
 
     t2 = PythonOperator(

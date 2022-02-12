@@ -5,8 +5,11 @@ from json import JSONDecodeError
 import requests
 from functional import seq
 
+from db.dao.wind_info import WindInfoMeasureCenterORM, WindInfoORM
 from db.dto import WindInfoDTO
+from db.dto.wind import WindInfoWithMeasureCenterInfoDTO
 from infra.secret import get_secret_data
+from repositories.wind_info import WindInfoRepository
 from utils.common import convert_empty_string_value_to_null, convert_to_kst_datetime
 
 API_KEY = get_secret_data("air-pollution/api")["asos_api_key"]
@@ -22,6 +25,38 @@ class LimitExceededError(Exception):
 
 class WindInfoService:
     DATE_FORMAT = "%Y%m%d"
+
+    def get_measured_wind_info_list(
+        self, target_datetime: datetime, repository: WindInfoRepository
+    ):
+        wind_info_orm_list: typing.List[WindInfoORM] = repository.get_by_measure_date(
+            target_datetime.date()
+        )
+        return wind_info_orm_list
+
+    def get_wind_info_with_measure_center_info(
+        self,
+        wind_info_orm_list: typing.List[WindInfoORM],
+        wind_info_repository: WindInfoRepository,
+    ) -> typing.List[WindInfoWithMeasureCenterInfoDTO]:
+        result = []
+        for wind_info in wind_info_orm_list:
+            center: WindInfoMeasureCenterORM = (
+                wind_info_repository.get_measure_center_by_id(wind_info.station_id)
+            )
+
+            assert center
+
+            dto = WindInfoWithMeasureCenterInfoDTO(
+                **wind_info.__dict__,
+                measure_center_address=center.address,
+                measure_center_official_code=center.official_code,
+                measure_center_latitude=center.latitude,
+                measure_center_longitude=center.longitude,
+            )
+            result.append(dto)
+
+        return result
 
     def build_one_day_query_string(self, target_datetime: datetime):
         start_dt_str = end_dt_str = target_datetime.strftime(self.DATE_FORMAT)

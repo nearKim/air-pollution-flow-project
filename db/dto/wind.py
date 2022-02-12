@@ -10,6 +10,48 @@ class QualityEnum(str, Enum):
     결측 = "NULL"
 
 
+class WindInfoWithMeasureCenterInfoDTO(BaseModel):
+    measure_datetime_str: str
+    station_id: int
+    station_name: str
+    temperature: Optional[float]
+    is_temperature_normal: QualityEnum
+    precipitation: Optional[float]
+    is_precipitation_normal: QualityEnum
+    wind_speed: Optional[float]
+    is_wind_speed_normal: QualityEnum
+    wind_direction: Optional[int]
+    is_wind_direction_normal: QualityEnum
+    humidity: Optional[int]
+    is_humidity_normal: QualityEnum
+    vapor_pressure: Optional[float]
+    due_temperature: Optional[float]
+    atmosphere_pressure: Optional[float]
+    is_atmosphere_pressure_normal: QualityEnum
+    sea_level_pressure: Optional[float]
+    is_sea_level_pressure_normal: QualityEnum
+    sunshine: Optional[float]
+    is_sunshine_normal: QualityEnum
+    solar_radiation: Optional[float]
+    snow_depth: Optional[float]
+    cloudiness: Optional[int]
+    low_cloudiness: Optional[int]
+    cloud_formation: Optional[str]
+    least_cloud_height: Optional[int]
+    ground_status: Optional[int]
+    ground_temperature: Optional[float]
+    is_ground_temperature_normal: QualityEnum
+    ground_5_temperature: Optional[float]
+    ground_10_temperature: Optional[float]
+    ground_20_temperature: Optional[float]
+    ground_30_temperature: Optional[float]
+    visibility: Optional[int]
+    measure_center_address: str
+    measure_center_official_code: int
+    measure_center_latitude: float
+    measure_center_longitude: float
+
+
 class WindInfoDTO(BaseModel):
     measure_datetime_str: str = Field(alias="tm", description="일시")
     station_id: int = Field(alias="stnId", description="종관기상관측 지점 번호")

@@ -102,16 +102,5 @@ class AirQualityService:
             result.append(dto)
         return result
 
-    def serialize_to_json(
-        self, dto_list: typing.List[AirQualityWithMeasureCenterInfoDTO]
-    ) -> str:
-        def serialize_to_json(j) -> str:
-            return json.dumps(j, default=str, ensure_ascii=False)
-
-        dto_list = (
-            seq(dto_list).map(lambda orm: orm.__dict__).map(serialize_to_json).list()
-        )
-        return "\n".join(dto_list)
-
 
 air_quality_service = AirQualityService()

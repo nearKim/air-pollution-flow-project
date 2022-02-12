@@ -1,50 +1,60 @@
+import pathlib
+import shutil
 import typing
 from datetime import datetime, timedelta
 
 from airflow import DAG
+from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
-from sqlalchemy.dialects.mysql import insert
 
-from constants import KST
-from db.dao.air_quality import air_quality
-from db.dto import AirQualityDTO
-from infra.db import engine
-from services.air_quality import air_quality_service
-from utils.common import convert_to_kst_datetime
-from utils.sentry import capture_exception_to_sentry, init_sentry
+from constants import KST, TMP_DIR
+from db.dao.wind_info import WindInfoORM
+from db.dto.wind import WindInfoWithMeasureCenterInfoDTO
+from repositories.wind_info import wind_info_repository
+from services.wind_info import wind_info_service
+from utils.aws import upload_file
+from utils.common import (
+    convert_to_kst_datetime,
+    save_json_string_to_parquet,
+    serialize_to_json,
+)
+from utils.sentry import init_sentry
+
+BUCKET_NAME = "air-pollution-project-data"
 
 
-@capture_exception_to_sentry
-def get_api_result_count(datetime_str: str, **context) -> int:
-    dtz = convert_to_kst_datetime(datetime_str, "%Y-%m-%d")
-    cnt = air_quality_service.get_result_count(dtz)
-    return cnt
+def create_file_dir_path(datetime_str, **context):
+    pathlib.Path(TMP_DIR / datetime_str).mkdir(parents=True, exist_ok=True)
 
 
-@capture_exception_to_sentry
-def insert_data_to_db(datetime_str: str, **context) -> typing.NoReturn:
-    dtz = convert_to_kst_datetime(datetime_str, "%Y-%m-%d")
-    cnt = context["task_instance"].xcom_pull(task_ids="get_api_result_count")
-    dto_list: typing.List[AirQualityDTO] = air_quality_service.get_air_quality_list(
-        dtz, 1, cnt
+def delete_file_dir_path(datetime_str: str, **context):
+    p = pathlib.Path(TMP_DIR / datetime_str)
+    shutil.rmtree(p)
+
+
+def save_db_data_to_parquet_file(datetime_str: str, **context):
+    today = convert_to_kst_datetime(datetime_str, "%Y-%m-%d")
+    wind_info_orm_list: typing.List[
+        WindInfoORM
+    ] = wind_info_service.get_measured_wind_info_list(today, wind_info_repository)
+
+    dto_list: typing.List[
+        WindInfoWithMeasureCenterInfoDTO
+    ] = wind_info_service.get_wind_info_with_measure_center_info(
+        wind_info_orm_list, wind_info_repository
     )
-    dict_list = air_quality_service.convert_dto_list_to_dict_list(dto_list)
+    json_str: str = serialize_to_json(dto_list)
+    save_json_string_to_parquet(datetime_str, "wind_info", json_str)
 
-    _stmt = insert(air_quality)
-    stmt = _stmt.on_duplicate_key_update(
-        id=_stmt.inserted.id,
-        measure_datetime=_stmt.inserted.measure_datetime,
-        location=_stmt.inserted.location,
-        no2=_stmt.inserted.no2,
-        o3=_stmt.inserted.o3,
-        co=_stmt.inserted.co,
-        so2=_stmt.inserted.so2,
-        pm10=_stmt.inserted.pm10,
-        pm25=_stmt.inserted.pm25,
+
+def insert_to_s3(datetime_str: str, **context):
+    today = convert_to_kst_datetime(datetime_str, "%Y-%m-%d").date()
+    path = f"{BUCKET_NAME}/wind_info/measure_date={str(today)}"
+    upload_file(
+        f"{TMP_DIR}/{datetime_str}/data.parquet",
+        path,
+        f"data__{str(today)}.parquet",
     )
-
-    with engine.connect() as conn:
-        conn.execute(stmt, dict_list)
 
 
 default_args = {
@@ -57,28 +67,42 @@ default_args = {
 }
 
 with DAG(
-    "insert_data_to_db",
+    dag_id="wind_speed_dw",
+    description="풍향, 풍속 정보를 S3에 저장합니다.",
     default_args=default_args,
-    description="서울시 대기환경 API의 리스폰스를 DB에 업데이트합니다.",
     schedule_interval="@daily",
     start_date=datetime(2018, 1, 1, tzinfo=KST),
     catchup=True,
-    max_active_runs=5,
-    tags=["air_quality", "DB"],
+    max_active_runs=10,
+    tags=["wind_info", "DW"],
 ) as dag:
     init_sentry()
 
-    t1 = PythonOperator(
-        task_id="get_api_result_count",
-        python_callable=get_api_result_count,
+    start = DummyOperator(task_id="start")
+
+    create_tmp_dir = PythonOperator(
+        task_id="create_tmp_dir",
+        python_callable=create_file_dir_path,
         op_kwargs={"datetime_str": "{{ ds }}"},
+    )
+    t1 = PythonOperator(
+        task_id="save_db_data_to_parquet_file",
+        python_callable=save_db_data_to_parquet_file,
+        op_kwargs={"datetime_str": "{{ ds }}"},
+        task_concurrency=1,  # filename이 겹칠 수 있음
     )
 
     t2 = PythonOperator(
-        task_id="insert_data_to_db",
-        python_callable=insert_data_to_db,
+        task_id="insert_to_s3",
+        python_callable=insert_to_s3,
         op_kwargs={"datetime_str": "{{ ds }}"},
-        retry_delay=timedelta(days=1),
     )
 
-    t1 >> t2
+    delete_tmp_dir = PythonOperator(
+        task_id="delete_tmp_dir",
+        python_callable=delete_file_dir_path,
+        op_kwargs={"datetime_str": "{{ ds }}"},
+    )
+    end = DummyOperator(task_id="end")
+
+    start >> create_tmp_dir >> t1 >> t2 >> delete_tmp_dir >> end
