@@ -45,7 +45,7 @@ class WindInfoService:
                 wind_info_repository.get_measure_center_by_id(wind_info.station_id)
             )
 
-            assert center
+            assert center, f"{wind_info.station_id} is not found"
 
             dto = WindInfoWithMeasureCenterInfoDTO(
                 **wind_info.__dict__,
