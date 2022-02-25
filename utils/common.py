@@ -37,14 +37,14 @@ def save_json_string_to_parquet(
 ) -> typing.NoReturn:
     file_dir_path = f"{TMP_DIR}/{datetime_str}"
     save_json_data_to_file(filename, file_dir_path, json_str)
-    table = get_pyarrow_table_from_tmp_dir(file_dir_path)
+    table = get_pyarrow_table_from_tmp_dir(filename, file_dir_path)
     save_parquet_data_to_file(file_dir_path, table)
 
 
-def get_pyarrow_table_from_tmp_dir(path: str) -> "Table":
+def get_pyarrow_table_from_tmp_dir(filename, path: str) -> "Table":
     from pyarrow import json
 
-    table = json.read_json(f"{path}/data.json")
+    table = json.read_json(f"{path}/{filename}.json")
     return table
 
 
