@@ -48,7 +48,7 @@ class WindInfoService:
             assert center, f"{wind_info.station_id} is not found"
 
             dto = WindInfoWithMeasureCenterInfoDTO(
-                **wind_info.__dict__,
+                **wind_info.serialize(),
                 measure_datetime_str=wind_info.measure_datetime.strftime(self.DATE_FORMAT),
                 measure_center_address=center.address,
                 measure_center_official_code=center.official_code,
