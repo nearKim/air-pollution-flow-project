@@ -15,23 +15,23 @@ class WindInfoWithMeasureCenterInfoDTO(BaseModel):
     station_id: int
     station_name: str
     temperature: Optional[float]
-    is_temperature_normal: QualityEnum
+    is_temperature_normal: Optional[bool]
     precipitation: Optional[float]
-    is_precipitation_normal: QualityEnum
+    is_precipitation_normal: Optional[bool]
     wind_speed: Optional[float]
-    is_wind_speed_normal: QualityEnum
+    is_wind_speed_normal: Optional[bool]
     wind_direction: Optional[int]
-    is_wind_direction_normal: QualityEnum
+    is_wind_direction_normal: Optional[bool]
     humidity: Optional[int]
-    is_humidity_normal: QualityEnum
+    is_humidity_normal: Optional[bool]
     vapor_pressure: Optional[float]
     due_temperature: Optional[float]
     atmosphere_pressure: Optional[float]
-    is_atmosphere_pressure_normal: QualityEnum
+    is_atmosphere_pressure_normal: Optional[bool]
     sea_level_pressure: Optional[float]
-    is_sea_level_pressure_normal: QualityEnum
+    is_sea_level_pressure_normal: Optional[bool]
     sunshine: Optional[float]
-    is_sunshine_normal: QualityEnum
+    is_sunshine_normal: Optional[bool]
     solar_radiation: Optional[float]
     snow_depth: Optional[float]
     cloudiness: Optional[int]
@@ -40,7 +40,7 @@ class WindInfoWithMeasureCenterInfoDTO(BaseModel):
     least_cloud_height: Optional[int]
     ground_status: Optional[int]
     ground_temperature: Optional[float]
-    is_ground_temperature_normal: QualityEnum
+    is_ground_temperature_normal: Optional[bool]
     ground_5_temperature: Optional[float]
     ground_10_temperature: Optional[float]
     ground_20_temperature: Optional[float]
