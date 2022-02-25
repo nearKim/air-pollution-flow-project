@@ -50,7 +50,7 @@ def save_db_data_to_parquet_file(datetime_str: str, **context):
 def insert_to_s3(datetime_str: str, **context):
     today = convert_to_kst_datetime(datetime_str, "%Y-%m-%d").date()
     upload_file(
-        f"{TMP_DIR}/{datetime_str}/data.parquet",
+        f"{TMP_DIR}/{datetime_str}/wind_info.parquet",
         BUCKET_NAME,
         f"wind_info/measure_date={str(today)}/data__{str(today)}.parquet",
     )
