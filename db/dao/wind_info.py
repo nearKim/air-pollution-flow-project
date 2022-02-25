@@ -74,6 +74,18 @@ wind_info = Table(
 
 
 class WindInfoORM(Base):
+    _BOOLEAN_COLUMN_NAMES = [
+        "is_temperature_normal",
+        "is_precipitation_normal",
+        "is_wind_speed_normal",
+        "is_wind_direction_normal",
+        "is_humidity_normal",
+        "is_atmosphere_pressure_normal",
+        "is_sea_level_pressure_normal",
+        "is_sunshine_normal",
+        "is_ground_temperature_normal",
+    ]
+
     __tablename__ = "wind_info"
 
     id = Column("id", BigInteger, primary_key=True)
@@ -118,6 +130,20 @@ class WindInfoORM(Base):
     ground_20_temperature = Column("ground_20_temperature", Float, nullable=True)
     ground_30_temperature = Column("ground_30_temperature", Float, nullable=True)
     visibility = Column("visibility", Integer, nullable=True)
+
+    def serialize(self) -> dict:
+        d = self.__dict__
+        for k, v in d.items():
+            if k in self._BOOLEAN_COLUMN_NAMES:
+                if v == QualityEnum.정상:
+                    d[k] = True
+                elif v == QualityEnum.오류:
+                    d[k] = False
+                elif v == QualityEnum.결측:
+                    d[k] = None
+                else:
+                    raise ValueError(f"Unknown value: {v}")
+        return d
 
 
 class WindInfoMeasureCenterORM(Base):
