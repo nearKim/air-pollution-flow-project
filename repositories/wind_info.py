@@ -7,8 +7,8 @@ from infra.db import session
 
 
 class WindInfoRepository:
-    def get_measure_center_by_id(self, id: int) -> WindInfoMeasureCenterORM:
-        result = session.query(WindInfoMeasureCenterORM).filter_by(id=id).first()
+    def get_measure_center_by_id(self, official_code: int) -> WindInfoMeasureCenterORM:
+        result = session.query(WindInfoMeasureCenterORM).filter_by(official_code=official_code).first()
         return result
 
     def get_by_measure_date(
